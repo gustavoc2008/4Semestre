@@ -1,18 +1,103 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import axios from "axios"
 import './App.css'
 import penIcon from "./assets/Group 1.svg"
 import trashIcon from "./assets/Group 2.svg"
 
 function App() {
   // States / Variaveis
-  const [taskList, setTaskList] = useState([
-    { id: 1, description: "Revisar HTML" },
-    { id: 2, description: "Revisar CSS" },
-    { id: 3, description: "Revisar ReactJS" },
-    { id: 4, description: "Aprender React Native" }
-  ])
+  const [taskList, setTaskList] = useState([])
+  const [taskValue, setTaskValue] = useState("")
+  const [editMode, setEditMode] = useState(false)
+  const [idToEdit, setIdToEdit] = useState(0)
 
-  //
+  //Funcoes
+  const getTasks = async () => {
+    try {
+      const APIReturn = await axios.get("http://localhost:3000/taskpoint")
+      const APIData = APIReturn.data
+
+      setTaskList(APIData)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const getTasksById = (id) => {
+    alert(`Funcao getTasksById em desenvolvimento ${id}`)
+  }
+
+  const postTasks = async (e) => {
+    e.preventDefault()
+    if (taskValue.trim().length == 0) {
+      alert("Preencher o campo valor")
+      return false
+    }
+
+    try {
+      const APIReturn = await axios.post("http://localhost:3000/taskpoint", {
+        descricao: taskValue,
+      })
+
+      setTaskValue("")
+      getTasks()
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const putTasks = (item) => {
+    setIdToEdit(item.id)
+    setEditMode(true)
+    setTaskValue(item.descricao)
+  }
+
+  const confirmPutTask = async (e) => {
+    e.preventDefault()
+
+    if (taskValue.trim().length == 0) {
+      alert("Preencha o texto da tarefa")
+      return false
+    }
+
+    try {
+      const APIReturn = await axios.put(`http://localhost:3000/taskpoint/${idToEdit}`, {
+        descricao: taskValue
+      })
+
+      setIdToEdit(0)
+      setTaskValue("")
+      setEditMode(false)
+      getTasks()
+
+      alert(`A tarefa foi editada!`)
+    } catch (error) {
+      alert(`Erro ao editar!`)
+      console.log(error);
+    }
+  }
+
+  const deleteTasks = async (id) => {
+    const excluir = confirm("Atencao: quer realmente excluir essa tarefa?")
+    if (!excluir) {
+      return false
+    }
+
+    try {
+      const APIReturn = await axios.delete(`http://localhost:3000/taskpoint/${id}`);
+      alert("Tarefa excluida com sucesso!")
+
+      getTasks();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //Effects e Ciclo de Vida 
+
+  useEffect(() => {
+    getTasks()
+  }, [])
 
   return (
     <>
@@ -21,9 +106,34 @@ function App() {
       </header>
 
       <main className='body-section'>
-        <form className='cad-task'>
-          <input className='cad-task__entry' type="text" placeholder='Adicione uma tarefa' />
+        <form className='cad-task' onSubmit={editMode ? confirmPutTask : postTasks}>
+          <input
+            className='cad-task__entry'
+            type="text"
+            placeholder='Adicione uma tarefa'
+            value={taskValue}
+            onChange={(e) => {
+              setTaskValue(e.target.value)
+            }}
+          />
+          <p>{taskValue}</p>
           <button className='cad-task__btn-confirm'>Adicionar</button>
+
+          {
+            editMode &&
+            <button
+              className='cad-task__btn-confirm'
+              type='button'
+              onClick={() => {
+                setTaskValue("")
+                setIdToEdit(0)
+                setEditMode(false)
+              }}
+            >
+              Cancelar
+            </button>
+          }
+
         </form>
         <section className='cardlist'>
 
@@ -31,11 +141,29 @@ function App() {
             taskList.map((t) => {
               return (
                 <article className='cardtask' key={t.id}>
-                  <p className='cardtask__task-text'>{t.description}</p>
+                  <p className='cardtask__task-text'>{t.descricao}</p>
 
                   <div className='cardtask__icon-box'>
-                    <div className='cardlist__icon'> <img src={penIcon} alt="Editar" /></div>
-                    <div className='cardlist__icon'> <img src={trashIcon} alt="Excluir" /></div>
+                    <div className='cardlist__icon'>
+                      <img
+                        src={penIcon}
+                        className='cardlist__edit-icon'
+                        alt="Iamgem de um lapis, funcao de editar a tarefa"
+                        onClick={() => {
+                          putTasks(t)
+                        }}
+                      />
+                    </div>
+                    <div className='cardlist__icon'>
+                      <img
+                        src={trashIcon}
+                        className='cardlist__delete-icon'
+                        alt="Iamgem de uma lixeira, funcao de excluir a tarefa"
+                        onClick={() => {
+                          deleteTasks(t.id)
+                        }}
+                      />
+                    </div>
                   </div>
                 </article>
               )
