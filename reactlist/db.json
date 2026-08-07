@@ -1,9 +1,4 @@
 {
-  "taskpoint": [
-    {
-      "descricao": "rrr r33",
-      "id": "-A14qHkGe8c"
-    }
-  ],
+  "taskpoint": [],
   "$schema": "./node_modules/json-server/schema.json"
 }

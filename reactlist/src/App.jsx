@@ -126,7 +126,7 @@ function App() {
               type='button'
               onClick={() => {
                 setTaskValue("")
-                setIdToEdit(0)
+                setIdToEdit(0)  
                 setEditMode(false)
               }}
             >
